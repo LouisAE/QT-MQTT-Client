@@ -2,10 +2,10 @@
 
 #include <QtWidgets/QMainWindow>
 #include "qmqtt.h"
-#include <QListWidgetItem>
 #include "ui_QtMqtt.h"
 
 class SetupDialog;
+class QHostInfo;
 
 class QtMqtt : public QMainWindow
 {
@@ -32,4 +32,6 @@ private slots:
     void on_selectedSubChanged(int row);
     void on_clearSubsButton_clicked();
     void client_error_occured(QMQTT::ClientError error);
+
+    void host_lookup_finished(const QHostInfo& info);
 };

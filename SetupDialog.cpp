@@ -66,3 +66,4 @@ void SetupDialog::applySettings()
 	this->accept();
 }
 
+

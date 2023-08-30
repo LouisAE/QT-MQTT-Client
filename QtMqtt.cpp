@@ -16,6 +16,7 @@ QtMqtt::QtMqtt(QWidget *parent)
     ui.setupUi(this);
     ui.messageList->setReadOnly(true);
     ui.messageList->append(FONT_GREEN("就绪"));
+    ui.stopButton->setEnabled(false);
 
     serverSetupDialog = new SetupDialog(this);
 
@@ -34,27 +35,21 @@ void QtMqtt::on_startButton_clicked()
     {
         ui.messageList->append("正在连接服务端......");
 
+        m_client->setPort(serverSetupDialog->getPort());
+        m_client->setUsername(serverSetupDialog->getUsername());
+        m_client->setPassword(serverSetupDialog->getPassword().toUtf8());
+
         //handle host
         auto serverip = QHostAddress(serverSetupDialog->getHost());
         if (!serverip.isNull())
         {
             m_client->setHost(serverip);
+            m_client->connectToHost();
         }
         else
         {
-            auto info = QHostInfo::fromName(serverSetupDialog->getHost());
-            if (info.error() != QHostInfo::NoError)
-			{
-				ui.messageList->append(FONT_RED("无法解析域名，请检查域名或IP地址是否正确"));
-				return;
-			}
-			m_client->setHost(info.addresses()[0]);
+            QHostInfo::lookupHost(serverSetupDialog->getHost(),this, &QtMqtt::host_lookup_finished);
         }
-        m_client->setPort(serverSetupDialog->getPort());
-        m_client->setUsername(serverSetupDialog->getUsername());
-        m_client->setPassword(serverSetupDialog->getPassword().toUtf8());
-        
-        m_client->connectToHost();
     }
 }
 
@@ -62,6 +57,8 @@ void QtMqtt::on_stopButton_clicked()
 {   
     m_client->disconnectFromHost();
     ui.messageList->append(FONT_RED("已断开连接"));
+    ui.startButton->setEnabled(true);
+    ui.stopButton->setEnabled(false);
 }
 
 void QtMqtt::on_receivedMessage(const QMQTT::Message& msg)
@@ -72,6 +69,9 @@ void QtMqtt::on_receivedMessage(const QMQTT::Message& msg)
 void QtMqtt::on_connected()
 {
 	ui.messageList->append("连接成功");
+    serverSetupDialog->reject();
+    ui.startButton->setEnabled(false);
+    ui.stopButton->setEnabled(true);
 }
 
 void QtMqtt::on_clearButton_clicked()
@@ -179,4 +179,15 @@ void QtMqtt::client_error_occured(QMQTT::ClientError error)
 		break;
     }
     }
+}
+
+void QtMqtt::host_lookup_finished(const QHostInfo& info)
+{
+    if (info.error() != QHostInfo::NoError)
+    {
+        ui.messageList->append(FONT_RED("无法解析域名，请检查域名或IP地址是否正确"));
+        return;
+    }
+    m_client->setHost(info.addresses()[0]);
+    m_client->connectToHost();
 }

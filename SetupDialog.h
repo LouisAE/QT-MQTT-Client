@@ -23,7 +23,6 @@ public:
 
 private slots:
 	void applySettings();
-
 private:
 	Ui::SetupDialog ui;
 
@@ -34,5 +33,5 @@ private:
 	quint8 networkProtocol;
 	bool tls_enable;
 
-	void checkInput();
+	
 };
